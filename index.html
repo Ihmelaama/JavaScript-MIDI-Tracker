@@ -1,0 +1,38 @@
+<html>
+
+    <head>
+
+        <script type="module" src="main.js"></script>
+        <script type="module" src="UI.js"></script>
+        <script type="module" src="MIDITrack.js"></script>
+
+        <link rel="stylesheet" href="style.css">
+
+    </head>
+
+    <body>
+
+        <div id="settings">
+        <script type="module" src="settings.js"></script>
+        </div>
+
+        <div id="MIDIConsole">
+        <script type="module" src="MIDIConsole.js"></script>
+        </div>
+
+        <h2>CONTROLLER</h2>
+        <div id="controller" class="controller">
+        <script type="module" src="controller.js"></script>        
+        </div>
+        
+        <h2>NOTES <input type="button" class="addTrackButton" onclick="window.addTrack('note')"></h2>        
+        <div id="noteTracks">
+        </div>
+
+        <h2>CC <input type="button" class="addTrackButton" onclick="window.addTrack('cc');"></h2>
+        <div id="CCTracks">
+        </div>
+
+    </body>
+
+</html>
