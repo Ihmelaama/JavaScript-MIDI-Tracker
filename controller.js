@@ -21,7 +21,7 @@
     function init() {
         
         let BPM=window.localStorage.getItem("BPM");
-        if(BPM!==undefined) window.BPM=parseInt(BPM);
+        if(BPM!=null) window.BPM=parseInt(BPM);
 
         createController();
 

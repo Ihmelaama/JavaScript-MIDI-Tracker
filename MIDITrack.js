@@ -38,7 +38,8 @@ class MIDITrack {
         this.playDirection=1;
         this.nextBeatTime=-1;    
         this.beatNum=0;
-        this.editBeatNum=-1;
+
+        this.selectedBeats=[];
 
         this.pendingOctave=-1;    
         this.pendingNote=-1;    
@@ -53,7 +54,10 @@ class MIDITrack {
 
         this.lastTime=-1;
         this.deltaTime=-1;
-        this.CCTimeout=null;
+
+        this.CCUpdateTimeout=null;
+        this.scrollSelectedBeatsInterval=null;
+        this.scrollNotesAndOctavesInterval=null;
 
 //----------------------------------------------------
 // INIT
@@ -134,7 +138,19 @@ class MIDITrack {
 
         this.lastTime=time;
 
-    //---
+    // scroll selected beats ---
+
+        if(this.selectedBeats.length>0 && window.arrowLeft!=window.arrowRight) {
+        this.scrollSelectedBeats();
+        }
+
+    // scroll notes and octaves ---
+
+        if(this.selectedBeats.length>0 && window.arrowUp!=window.arrowDown) {
+        this.scrollNotesAndOctaves();
+        }
+
+    // update track when playing ---
 
         if(window.isPlaying) {
 
@@ -256,8 +272,8 @@ class MIDITrack {
         if(beatWasPlayed) {
 
             let self=this;
-            clearTimeout(this.CCTimeout);
-            this.CCTimeout=setTimeout(function() {
+            clearTimeout(this.CCUpdateTimeout);
+            this.CCUpdateTimeout=setTimeout(function() {
 
                 if(beat===undefined) return;
 
@@ -320,7 +336,22 @@ class MIDITrack {
     createEditor() {
 
         this.editor=this.createElem(this.editor);
-        let beat= this.editBeatNum>-1 ? this.beats[this.editBeatNum] : null ;
+
+        let octave=this.pendingOctave;
+        let note=this.pendingNote;
+        let duration=this.pendingNoteDuration;
+
+        let beatNum= this.selectedBeats.length===1 ? this.selectedBeats[0] : -1 ;
+        let beat= beatNum>-1 ? this.beats[beatNum] : null ;
+        if(beat!==null) {
+
+            if(beat.hasOwnProperty("octave")) octave=beat.octave;
+            if(beat.hasOwnProperty("note")) note=beat.note;
+            if(beat.hasOwnProperty("duration")) duration=beat.duration;
+
+        }
+        
+        if(duration<window.minNoteDuration) duration=window.minNoteDuration;
 
         let but;
         let div=this.editor;
@@ -328,13 +359,13 @@ class MIDITrack {
         if(this.type==="note") {
 
         // octave ---
-        
+
             but=Dropdown(
             "OCT", 
             ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
             [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             (option, value) => { this.setOctave(value); },
-            beat!==null && beat.octave>-1 ? beat.octave : "-"
+            octave>-1 ? octave : "-"
             );
 
             div.appendChild(but);
@@ -349,15 +380,15 @@ class MIDITrack {
             noteNames,
             noteValues,
             (option, value) => { this.setNote(value); },
-            beat!==null && beat.note>-1 ? this.getNoteName(beat.note) : "-"
+            note>-1 ? this.getNoteName(note) : "-"
             );
 
             div.appendChild(but);            
 
         // duration ---
 
-           but=TextInput("DUR", beat!==null ? beat.duration : window.minNoteDuration, (value) => { this.setNoteDuration(value); });
-           div.appendChild(but)   
+            but=TextInput("DUR", duration, (value) => { this.setNoteDuration(value); });
+            div.appendChild(but)   
 
         } else {
 
@@ -396,7 +427,7 @@ class MIDITrack {
 
             let c="";
             let className="beat";
-            className+= i===this.editBeatNum ? " selected" : "" ;
+            className+= this.selectedBeats.indexOf(i)>-1 ? " selected" : "" ;
             className+= i===this.beatNum-2 ? " active" : "" ;
 
             if(this.type==="note") {
@@ -416,7 +447,7 @@ class MIDITrack {
             
             }
 
-            elem=Button("", c, "click", (e) => { this.editBeat(e, i)});
+            elem=Button("", c, "click", (e) => { this.selectBeat(e, i)});
             elem.className=className;
             div.appendChild(elem);
 
@@ -521,6 +552,8 @@ class MIDITrack {
 
         this.pingPong=value;
         window.localStorage.setItem(this.id+"pingPong", this.pingPong);
+
+        if(!this.pingPong) this.playDirection=1;
         
     }
 
@@ -532,16 +565,20 @@ class MIDITrack {
         if(this.pendingOctave<0) this.pendingOctave+=10;
         if(this.pendingOctave>9) this.pendingOctave-=10;
 
-        if(this.editBeatNum>-1) {
+        for(let i=0; i<this.selectedBeats.length; i++) {
         
-            this.beats[this.editBeatNum].octave=this.pendingOctave;
-            this.beats[this.editBeatNum].MIDINote=this.getMIDINote(this.beats[this.editBeatNum].octave, this.beats[this.editBeatNum].note);
-            window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
-            this.createTrack();            
+            let beatNum=this.selectedBeats[i];
+            let beat=this.beats[beatNum];
+
+            beat.octave=this.pendingOctave;
+            beat.MIDINote=this.getMIDINote(beat.octave, beat.note);
 
         }
 
+        this.createTrack();
         this.createEditor();
+
+        window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
 
     }
 
@@ -554,16 +591,20 @@ class MIDITrack {
         if(this.pendingNote>11) this.pendingNote-=12;
         if(this.pendingOctave>9 && this.pendingNote>7) this.pendingNote-=8;
 
-        if(this.editBeatNum>-1) {
+        for(let i=0; i<this.selectedBeats.length; i++) {
         
-            this.beats[this.editBeatNum].note=this.pendingNote;
-            this.beats[this.editBeatNum].MIDINote=this.getMIDINote(this.beats[this.editBeatNum].octave, this.beats[this.editBeatNum].note);
-            window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
-            this.createTrack();
+            let beatNum=this.selectedBeats[i];
+            let beat=this.beats[beatNum];
+
+            beat.note=this.pendingNote;
+            beat.MIDINote=this.getMIDINote(beat.octave, beat.note);
 
         }
 
+        this.createTrack();
         this.createEditor();
+
+        window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
 
     }
 
@@ -623,89 +664,6 @@ class MIDITrack {
 
     }
 
-    /*
-    scrollOctave(event) {
-
-        let d=Math.sign(event.deltaY);
-        this.pendingOctave-=d;
-        if(this.pendingOctave<0) this.pendingOctave+=11;
-        if(this.pendingOctave>10) this.pendingOctave-=11;
-        this.createEditor();
-
-        if(this.editBeatNum>-1) {
-        
-            this.beats[this.editBeatNum].octave=this.pendingOctave;
-            this.beats[this.editBeatNum].MIDINote=this.getMIDINote(this.beats[this.editBeatNum].octave, this.beats[this.editBeatNum].note);
-            window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
-            this.createTrack();            
-
-        }
-
-    }
-
-//------------
-
-    scrollNote(event) {
-
-        let d=Math.sign(event.deltaY);
-        this.pendingNote-=d;
-        if(this.pendingNote<0) this.pendingNote+=12;
-        if(this.pendingNote>11) this.pendingNote-=12;
-        if(this.pendingOctave>9 && this.pendingNote>7) this.pendingNote-=8;
-        this.createEditor();
-        
-        if(this.editBeatNum>-1) {
-        
-            this.beats[this.editBeatNum].note=this.pendingNote;
-            this.beats[this.editBeatNum].MIDINote=this.getMIDINote(this.beats[this.editBeatNum].octave, this.beats[this.editBeatNum].note);
-            window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
-            this.createTrack();
-
-        }
-
-    }
-
-//------------
-
-    scrollNoteDuration(event) {
-
-        let d=Math.sign(event.deltaY);
-        this.pendingNoteDuration-=d;
-        if(d<0 && this.pendingNoteDuration<window.minNoteDuration) this.pendingNoteDuration=window.minNoteDuration;
-        if(this.pendingNoteDuration<window.minNoteDuration) this.pendingNoteDuration=window.minNoteDuration;
-        this.createEditor();
-
-        if(this.editBeatNum>-1) {
-        
-            this.beats[this.editBeatNum].duration=this.pendingNoteDuration;
-            window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
-            this.createTrack();
-
-        }
-
-    }
-
-//------------
-
-    scrollCCValue(event) {
-
-        let d=Math.sign(event.deltaY);
-        this.pendingCCValue-=d;
-        if(this.pendingCCValue<0) this.pendingCCValue+=128;
-        if(this.pendingCCValue>127) this.pendingCCValue-=128;
-        this.createEditor();
-
-        if(this.editBeatNum>-1) {
-        
-            this.beats[this.editBeatNum].CCValue=this.pendingCCValue;
-            window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
-            this.createTrack();            
-
-        }
-
-    }
-    */
-
 //------------
 
     clearBeat(event) {
@@ -757,35 +715,153 @@ class MIDITrack {
     removeBeat() {
 
         let beatNum= this.editBeatNum>-1 ? this.editBeatNum : this.beats.length-1 ;
-        console.log("beat num? "+beatNum);
         this.beats.splice(this.editBeatNum, 1);
         window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
         this.createTrack();
 
-        if(this.editBeatNum>-1) {
-        this.editBeat(null, this.editBeatNum-1);  
+    }
+
+//------------
+
+    selectBeat(event, num) {
+        
+        if(num<0) return;
+
+        let beat=null;
+        let i=this.selectedBeats.indexOf(num);
+        let alreadySelected= i===-1 ? false : true ;
+
+        if(!alreadySelected) {
+
+            // clear other selected beats unless selected with ctrl pressed
+            if(!window.controlDown) {
+            this.selectedBeats=[];
+            }
+
+            beat=this.beats[num];
+            this.selectedBeats.push(num);
+
+        } else {
+
+            if(window.controlDown) {
+
+                this.selectedBeats.splice(i, 1);
+
+            } else {
+
+                if(this.selectedBeats.length>1) {
+
+                    this.selectedBeats=[];
+                    this.selectedBeats.push(num);
+
+                } else {
+                
+                    this.selectedBeats.splice(i, 1);
+
+                }
+
+            }
+
+        }
+
+        this.pendingOctave= beat!==null && beat.hasOwnProperty("octave") ? beat.octave : -1 ;
+        this.pendingNote= beat!==null && beat.hasOwnProperty("note") ? beat.note : -1 ;
+        this.pendingNoteDuration= beat!==null && beat.hasOwnProperty("duration") ? beat.duration : 0 ;
+        this.pendingCCValue= beat!==null && beat.hasOwnProperty("CCValue") ? beat.CCValue : -1 ;
+
+        this.createEditor();
+        this.createTrack();
+
+    }
+
+//------------
+
+    scrollSelectedBeats() {
+
+        let self=this;        
+
+        let scroll=function() {
+
+            if(window.arrowLeft===window.arrowRight) {
+            
+                clearInterval(self.scrollSelectedBeatsInterval);
+                self.scrollSelectedBeatsInterval=null;
+
+            } else {
+
+                let direction= window.arrowLeft ? -1 : 1 ;
+        
+                for(let i=0; i<self.selectedBeats.length; i++) {
+                    
+                    let beatNum=self.selectedBeats[i]+direction;
+                    if(beatNum<0) beatNum=self.beats.length-1;
+                    if(beatNum>=self.beats.length) beatNum=0;
+                    self.selectedBeats[i]=beatNum;
+        
+                }
+
+                self.createEditor();        
+                self.createTrack();
+
+            }
+
+        }
+
+        if(!self.scrollSelectedBeatsInterval) {
+        
+            scroll();
+            self.scrollSelectedBeatsInterval=setInterval(scroll, 200);
+
         }
 
     }
 
 //------------
 
-    editBeat(event, num) {
+    scrollNotesAndOctaves() {
+
+        let self=this;        
+
+        let scroll=function() {
+
+            if(window.arrowUp===window.arrowDown) {
+            
+                clearInterval(self.scrollNotesAndOctavesInterval);
+                self.scrollNotesAndOctavesInterval=null;
+
+            } else {
+
+                let direction= window.arrowUp ? 1 : -1 ;
+
+                for(let i=0; i<self.selectedBeats.length; i++) {
+                    
+                    let beatNum=self.selectedBeats[i]+direction;
+
+                    if(window.shiftDown) {
+                    
+                        console.log("scroll octaves");
+
+                    } else {
+
+                        console.log("scroll notes");
+
+                    }
+
+                }
+
+                self.createEditor();        
+                self.createTrack();
+
+            }
+
+        }
+
+        if(!self.scrollNotesAndOctavesInterval) {
         
-        if(num<0) return;
+            scroll();
+            self.scrollNotesAndOctavesInterval=setInterval(scroll, 200);
 
-        this.editBeatNum=num;
-        let beat=this.beats[num];
-
-        this.pendingOctave= beat.hasOwnProperty("octave") ? beat.octave : -1 ;
-        this.pendingNote= beat.hasOwnProperty("note") ? beat.note : -1 ;
-        this.pendingNoteDuration= beat.hasOwnProperty("duration") ? beat.duration : 0 ;
-        this.pendingCCValue= beat.hasOwnProperty("CCValue") ? beat.CCValue : -1 ;
-
-        for(let i=0; i<this.beats.length; i++) this.beats[i].elem.className=this.beats[i].elem.className.replace(" selected", "");
-        this.beats[num].elem.className+=" selected";
-
-        this.createEditor();
+        }
 
     }
 

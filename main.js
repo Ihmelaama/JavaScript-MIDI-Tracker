@@ -10,6 +10,8 @@
     let CCTrackHolder;
     let trackIds=[];
 
+    window.shiftDown=false;
+    window.controlDown=false;
     window.arrowDown=false;
     window.arrowUp=false;
     window.arrowLeft=false;
@@ -96,14 +98,20 @@
                 
                 // fail
                 function(midi) {
-                console.log("something went wrong with requestion midi access");
+                
+                    console.log("something went wrong with requestion midi access");
+                    dispatchEvent(mainReadyEvent);
+
                 }
                 
             );
         
 
         } else {
-        console.log("no midi");
+        
+            console.log("no midi");
+            dispatchEvent(mainReadyEvent);
+
         }
 
     }
@@ -113,6 +121,9 @@
     document.addEventListener("keydown", function onPress(event) {
 
         switch(event.key) {
+
+            case "Shift": window.shiftDown=true; break;
+            case "Control": window.controlDown=true; break;
 
             case "ArrowDown": window.arrowDown=true; break;
             case "ArrowUp": window.arrowUp=true; break;
@@ -126,6 +137,9 @@
     document.addEventListener("keyup", function onPress(event) {
 
         switch(event.key) {
+
+            case "Shift": window.shiftDown=false; break;
+            case "Control": window.controlDown=false; break;
 
             case "ArrowDown": window.arrowDown=false; break;
             case "ArrowUp": window.arrowUp=false; break;
