@@ -71,9 +71,12 @@
         if(navigator.requestMIDIAccess) {
 
             navigator.requestMIDIAccess().then(
-                
+
                 // success
                 function(m) {
+
+                    //m.onstatechange=function(e) { console.log("state changed"); console.log(e); }
+                    //m.addEventListener("onstatechange", function(e) { console.log(e); });
 
                 // get midi inputs ---
 

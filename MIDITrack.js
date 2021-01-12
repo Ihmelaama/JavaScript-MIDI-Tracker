@@ -13,6 +13,9 @@ class MIDITrack {
         this.id=id;
         this.pingPong=false;
 
+        this.scrollSpeed=150;
+        this.CCScrollStep=10;
+
     // holders ---
 
         this.beats=[];
@@ -22,6 +25,7 @@ class MIDITrack {
         this.controller;
         this.editor;
         this.track;        
+        this.console;
 
         this.updateInterval;
 
@@ -47,6 +51,7 @@ class MIDITrack {
         this.pendingCCValue=-1;  
         this.pendingCCGlide=1;
 
+        this.currentNoteName="";
         this.currentMIDINote=-1;
         this.currentCCValue=-1;
         this.targetCCValue=-1;
@@ -58,6 +63,7 @@ class MIDITrack {
         this.CCUpdateTimeout=null;
         this.scrollSelectedBeatsInterval=null;
         this.scrollNotesAndOctavesInterval=null;
+        this.scrollCCInterval=null;
 
 //----------------------------------------------------
 // INIT
@@ -91,6 +97,7 @@ class MIDITrack {
         this.createController();
         this.createEditor();
         this.createTrack();
+        this.createConsole();
 
         let del=document.createElement("button");
         del.className="deleteTrackButton";
@@ -147,7 +154,14 @@ class MIDITrack {
     // scroll notes and octaves ---
 
         if(this.selectedBeats.length>0 && window.arrowUp!=window.arrowDown) {
-        this.scrollNotesAndOctaves();
+        
+            if(this.type==="note") {
+            this.scrollNotesAndOctaves();
+
+            } else if(this.type==="cc") {
+            this.scrollCC();
+            }
+
         }
 
     // update track when playing ---
@@ -160,7 +174,8 @@ class MIDITrack {
 
             if(this.type==="note") {
             beatWasPlayed=this.updateNote();
-            } else {
+    
+            } else if(this.type==="cc") {
             beatWasPlayed=this.updateCC();
             }
 
@@ -197,6 +212,10 @@ class MIDITrack {
         this.nextBeatTime=-1;            
         }        
 
+    // update console ---
+
+        this.createConsole();
+
     }
 
 //------------
@@ -214,7 +233,7 @@ class MIDITrack {
             this.nextBeatTime=time+this.beatDuration();
             this.playNote(MIDINote, this.nextBeatTime, noteDuration);
             beatWasPlayed=true;
-            
+
         } else {
 
             let dif=this.nextBeatTime-time;
@@ -236,7 +255,8 @@ class MIDITrack {
     updateCC() {
 
         let time=window.performance.now();
-        let beat=this.beats[this.beatNum];
+        let beatNum=this.beatNum;
+        let beat=this.beats[beatNum];
         let CCValue=-1;
         let beatWasPlayed=false;
 
@@ -249,7 +269,7 @@ class MIDITrack {
             let CCValue=this.glide(this.currentCCValue, this.targetCCValue, glide);
             this.setCC(CCValue);
             this.currentCCValue=CCValue;
-         
+
         }
 
         if(this.nextBeatTime===-1) {
@@ -272,7 +292,6 @@ class MIDITrack {
         if(beatWasPlayed) {
 
             let self=this;
-            clearTimeout(this.CCUpdateTimeout);
             this.CCUpdateTimeout=setTimeout(function() {
 
                 if(beat===undefined) return;
@@ -337,6 +356,8 @@ class MIDITrack {
 
         this.editor=this.createElem(this.editor);
 
+        //this.editor.innerHTML="<h3>NOTE EDITOR</h3>";
+
         let octave=this.pendingOctave;
         let note=this.pendingNote;
         let duration=this.pendingNoteDuration;
@@ -355,6 +376,8 @@ class MIDITrack {
 
         let but;
         let div=this.editor;
+
+    // render note editor ---
 
         if(this.type==="note") {
 
@@ -390,7 +413,9 @@ class MIDITrack {
             but=TextInput("DUR", duration, (value) => { this.setNoteDuration(value); });
             div.appendChild(but)   
 
-        } else {
+    // render CC editor ---
+
+        } else if(this.type==="cc") {
 
         // cc value ---
         
@@ -419,6 +444,8 @@ class MIDITrack {
 
         this.track=this.createElem(this.track)
         let div=this.track;
+
+        //div.innerHTML="<h3>PATTERN</h3>";
 
         let elem;
         for(let i=0; i<this.beats.length; i++) {
@@ -455,6 +482,23 @@ class MIDITrack {
 
         }        
 
+    }
+
+//------------
+
+    createConsole() {
+
+        this.console=this.createElem(this.console);
+        let div=this.console;
+        div.className="console";
+
+        if(this.type==="note") {
+        div.innerHTML="";
+
+        } else if(this.type==="cc") {
+        div.innerHTML= this.currentCCValue<0 ? "" : this.currentCCValue.toFixed(0) ;
+        }
+        
     }
 
 // controller ------------
@@ -614,15 +658,19 @@ class MIDITrack {
 
         this.pendingCCValue=value;
 
-        if(this.editBeatNum>-1) {
+        for(let i=0; i<this.selectedBeats.length; i++) {
         
-            this.beats[this.editBeatNum].CCValue=this.pendingCCValue;
-            window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
-            this.createTrack();            
+            let beatNum=this.selectedBeats[i];
+            let beat=this.beats[beatNum];
+
+            beat.CCValue=this.pendingCCValue;
 
         }
 
+        this.createTrack();            
         this.createEditor();
+
+        window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
 
     }
 
@@ -632,15 +680,19 @@ class MIDITrack {
 
         this.pendingCCGlide=value;
 
-        if(this.editBeatNum>-1) {
+        for(let i=0; i<this.selectedBeats.length; i++) {
         
-            this.beats[this.editBeatNum].CCGlide=this.pendingCCGlide;
-            window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
-            this.createTrack();
+           let beatNum=this.selectedBeats[i];
+           let beat=this.beats[beatNum];
+
+           beat.CCGlide=this.pendingCCGlide;
 
         }
 
+        this.createTrack();
         this.createEditor();
+
+        window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
 
     }
 
@@ -652,15 +704,17 @@ class MIDITrack {
         if(value<0 && this.pendingNoteDuration<window.minNoteDuration) this.pendingNoteDuration=window.minNoteDuration;
         if(this.pendingNoteDuration<window.minNoteDuration) this.pendingNoteDuration=window.minNoteDuration;
 
-        if(this.editBeatNum>-1) {
+        for(let i=0; i<this.selectedBeats.length; i++) {
         
-            this.beats[this.editBeatNum].duration=this.pendingNoteDuration;
-            window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
-            this.createTrack();
+            let beatNum=this.selectedBeats[i];
+            this.beats[beatNum].duration=this.pendingNoteDuration;
 
         }
 
+        this.createTrack();                
         this.createEditor();
+
+        window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
 
     }
 
@@ -668,14 +722,13 @@ class MIDITrack {
 
     clearBeat(event) {
 
-        let num=this.editBeatNum;
-        
         this.pendingOctave=-1;
         this.pendingNote=-1;
         this.pendingCCValue=-1;
 
-        if(num>-1) {
-        
+        for(let i=0; i<this.selectedBeats.length; i++) {
+
+            let num=this.selectedBeats[i];
             this.beats[num].octave=-1;
             this.beats[num].note=-1;
             this.beats[num].MIDINote=-1;
@@ -684,10 +737,10 @@ class MIDITrack {
 
         }
 
-        window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
-
         this.createEditor();
-        if(num>-1) this.createTrack();
+        this.createTrack();
+
+        window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
 
     }
 
@@ -703,7 +756,8 @@ class MIDITrack {
         obj.CCValue=this.pendingCCValue;
         this.beats.push(obj);
 
-        this.editBeatNum=this.beats.length-1;
+        let num=this.beats.length-1;
+        this.selectedBeats.push(num);
 
         window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
         this.createTrack();        
@@ -714,10 +768,12 @@ class MIDITrack {
 
     removeBeat() {
 
-        let beatNum= this.editBeatNum>-1 ? this.editBeatNum : this.beats.length-1 ;
-        this.beats.splice(this.editBeatNum, 1);
-        window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
+        for(let i=this.selectedBeats.length-1; i>=0; i--) {        
+        this.beats.splice(i, 1);
+        }
+
         this.createTrack();
+        window.localStorage.setItem(this.id+"beats", JSON.stringify(this.beats));
 
     }
 
@@ -733,17 +789,17 @@ class MIDITrack {
 
         if(!alreadySelected) {
 
-            // clear other selected beats unless selected with ctrl pressed
-            if(!window.controlDown) {
+            // clear other selected beats unless selected with ctrl or shift pressed
+            if(!window.controlDown && !window.shiftDown) {
             this.selectedBeats=[];
             }
 
-            beat=this.beats[num];
             this.selectedBeats.push(num);
 
         } else {
 
-            if(window.controlDown) {
+            // select multiple if ctrl or shift pressed
+            if(window.controlDown || window.shiftDown) {
 
                 this.selectedBeats.splice(i, 1);
 
@@ -762,6 +818,12 @@ class MIDITrack {
 
             }
 
+        }
+
+        if(this.beats.length===1) {
+        beat=this.beats[num];
+        } else {
+        beat=null;
         }
 
         this.pendingOctave= beat!==null && beat.hasOwnProperty("octave") ? beat.octave : -1 ;
@@ -810,7 +872,7 @@ class MIDITrack {
         if(!self.scrollSelectedBeatsInterval) {
         
             scroll();
-            self.scrollSelectedBeatsInterval=setInterval(scroll, 200);
+            self.scrollSelectedBeatsInterval=setInterval(scroll, self.scrollSpeed);
 
         }
 
@@ -828,6 +890,7 @@ class MIDITrack {
             
                 clearInterval(self.scrollNotesAndOctavesInterval);
                 self.scrollNotesAndOctavesInterval=null;
+                window.localStorage.setItem(self.id+"beats", JSON.stringify(self.beats));
 
             } else {
 
@@ -835,17 +898,27 @@ class MIDITrack {
 
                 for(let i=0; i<self.selectedBeats.length; i++) {
                     
-                    let beatNum=self.selectedBeats[i]+direction;
+                    let beatNum=self.selectedBeats[i];
+                    let beat=self.beats[beatNum];
 
                     if(window.shiftDown) {
                     
-                        console.log("scroll octaves");
+                        let oct=beat.octave+direction;
+                        if(oct<0) oct+=10;
+                        if(oct>9) oct-=10;
+                        beat.octave=oct;
 
                     } else {
 
-                        console.log("scroll notes");
+                        let note=beat.note+=direction;
+                        if(note<0) note+=12;
+                        if(note>11) note-=12;
+                        beat.note=note;
+
 
                     }
+
+                    beat.MIDINote=self.getMIDINote(beat.octave, beat.note);
 
                 }
 
@@ -859,7 +932,64 @@ class MIDITrack {
         if(!self.scrollNotesAndOctavesInterval) {
         
             scroll();
-            self.scrollNotesAndOctavesInterval=setInterval(scroll, 200);
+            self.scrollNotesAndOctavesInterval=setInterval(scroll, self.scrollSpeed);
+
+        }
+
+    }
+
+//------------
+
+    scrollCC() {
+
+        let self=this;        
+
+        let scroll=function() {
+
+            if(window.arrowUp===window.arrowDown) {
+            
+                clearInterval(self.scrollCCInterval);
+                self.scrollCCInterval=null;
+
+            } else {
+
+                let direction= window.arrowUp ? 1 : -1 ;
+
+                for(let i=0; i<self.selectedBeats.length; i++) {
+   
+                    let beatNum=self.selectedBeats[i];
+                    let beat=self.beats[beatNum];
+                    let cc=parseInt(beat.CCValue);
+
+                    if(window.shiftDown) {
+                    
+                        cc+=direction*self.CCScrollStep;
+                        if(cc>127) cc=0;
+                        if(cc<0) cc=120;
+
+                    } else {
+                    
+                        cc+=direction;
+                        if(cc<0) cc+=128;
+                        if(cc>127) cc-=128;                                            
+    
+                    }
+
+                    beat.CCValue=cc;
+
+                }
+
+                self.createEditor();        
+                self.createTrack();
+
+            }
+
+        }
+
+        if(!self.scrollCCInterval) {
+        
+            scroll();
+            self.scrollCCInterval=setInterval(scroll, self.scrollSpeed);
 
         }
 

@@ -20,6 +20,7 @@
     body {
     font-family:font;
     font-size:12px;
+    font-weight:100;
     letter-spacing:1px;
     }
 
@@ -28,6 +29,7 @@
     margin-top:10px;
     margin-bottom:5px;
     font-size:12px;
+    font-weight:100;
     }
 
     p {
@@ -55,11 +57,11 @@
     }
 
     .track div:first-child {
-    min-width:270px;
+    min-width:315px;
     }
 
     .track div:nth-child(2) {
-    min-width:280px;
+    min-width:300px;
     }
 
     .controller,
@@ -195,6 +197,13 @@
 
 /* track ------------------ */
 
+    .track h3 {
+    font-size:8px;
+    font-weight:100;    
+    position:absolute;
+    top:-16px;
+    }
+
     .track.muted span .content {  
     background-color:#888;    
     }
@@ -247,6 +256,10 @@
         top:2px;
 
     }    
+
+    .track .console {
+    color:white;
+    }
 
 /* beats ------------------ */
 
