@@ -1,340 +1,299 @@
+@font-face {
+  font-family: "font";
+  src: url("./fonts/Minecraft.ttf") format("truetype");
+}
 
-    @font-face {
+* {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 
-        font-family: "font";
-        src: url("./fonts/Minecraft.ttf") format("truetype");
+body {
+  font-family: font;
+  font-size: 12px;
+  font-weight: 100;
+  letter-spacing: 1px;
+}
 
-    }
+h2 {
+  margin: 0;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  font-size: 12px;
+  font-weight: 100;
+}
 
-    * {
+p {
+  margin: 0;
+}
 
-        -webkit-touch-callout: none;
-        -webkit-user-select: none;
-        -khtml-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
+#noteTracks,
+#CCTracks {
+  position: relative;
+}
 
-    }
+.controller,
+.track {
+  border: 10px solid black;
+  background-color: black;
+}
 
-    body {
-    font-family:font;
-    font-size:12px;
-    font-weight:100;
-    letter-spacing:1px;
-    }
+.track div {
+  display: inline-block;
+  padding-right: 20px;
+}
 
-    h2 {
-    margin:0;
-    margin-top:10px;
-    margin-bottom:5px;
-    font-size:12px;
-    font-weight:100;
-    }
+.track div:first-child {
+  min-width: 315px;
+}
 
-    p {
-    margin:0;
-    }
+.track div:nth-child(2) {
+  min-width: 300px;
+}
 
-    #noteTracks,
-    #CCTracks {
-    position:relative;
-    }
+.controller,
+.track div:last-child {
+  border-right: 0;
+}
 
-    .controller,
-    .track {
+.controller span,
+.track span {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  cursor: pointer;
+  margin-right: 5px;
+}
 
-        border:10px solid black;
-        background-color:black;
+.controller span .title,
+.track span .title {
+  display: block;
+  color: white;
+  font-size: 8px;
+  text-align: left;
+  padding-bottom: 3px;
+}
 
-    }
+.controller span .content,
+.track span .content {
+  display: block;
+  background-color: white;
+  width: 100%;
+  text-align: center;
+  padding-top: 5px;
+  padding-top: 3px;
+}
 
-    .track div {
+span .content {
+  border-bottom: 5px solid black;
+}
 
-        display:inline-block;
-        padding-right:20px;
+.selected .content {
+  border-bottom: 5px solid #ff00b4;
+}
 
-    }
-
-    .track div:first-child {
-    min-width:315px;
-    }
-
-    .track div:nth-child(2) {
-    min-width:300px;
-    }
-
-    .controller,
-    .track div:last-child {
-    border-right:0;
-    }
-
-    .controller span,
-    .track span {
-
-        position:relative;
-        display:inline-block;
-        width:40px;
-        cursor:pointer;
-        margin-right:5px;
-        
-    }
-
-    .controller span .title,
-    .track span .title { 
-        
-        display:block;    
-        color:white;    
-        font-size:8px;
-        text-align:left;
-        padding-bottom:3px;
-
-    }
-
-    .controller span .content,
-    .track span .content { 
-
-        display:block;  
-        background-color:white;  
-        width:100%;
-        text-align:center;
-        padding-top:5px;
-        padding-top:3px;
-        
-    }
-
-    span .content {
-    border-bottom:5px solid black;
-    }
-
-    .selected .content {
-    border-bottom:5px solid #ff00b4;
-    }    
-
-    .error .content {
-    background-color:red !important;
-    }
+.error .content {
+  background-color: red !important;
+}
 
 /* MIDI console ----------- */
 
-    #MIDIConsole {
-    
-        position:relative;
-        min-height:80px;
+#MIDIConsole {
+  position: relative;
+  min-height: 80px;
+}
 
-    }
+#MIDIConsole div {
+  padding-right: 20px;
+  display: inline-block;
+}
 
-    #MIDIConsole div {
-    
-        padding-right:20px;
-        display:inline-block;
-
-    }
-
-    #MIDIConsole .messageList {
-
-        /*
+#MIDIConsole .messageList {
+  /*
         justify-content:flex-end;
         overflow:hidden;
         column-count: 5;
         */
 
-        max-height:150px;
-        display:inline-flex;
-        flex-direction:column;
-        flex-wrap:wrap;
-        position:absolute;
-        padding-top:28px;        
-        padding-left:20px;
+  max-height: 150px;
+  display: inline-flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  position: absolute;
+  padding-top: 28px;
+  padding-left: 20px;
+}
 
-    }
+#MIDIConsole .messageList h2 {
+  position: absolute;
+  top: -4px;
+  width: 300px;
+}
 
-    #MIDIConsole .messageList h2 {
+#MIDIConsole .messageList span {
+  flex: 1;
+  padding-right: 20px;
+}
 
-        position:absolute;
-        top:-4px;
-        width:300px;
+#MIDIConsole .messageList span:hover {
+  color: #ff00b4;
+  opacity: 1 !important;
+}
 
-    }
+#MIDIConsole .messageList font {
+  display: inline-block;
+}
 
-    #MIDIConsole .messageList span {
-    flex:1;
-    padding-right:20px;    
-    }
+#MIDIConsole .messageList font {
+}
 
-    #MIDIConsole .messageList span:hover {
-    color:#ff00b4;
-    opacity:1 !important;
-    }
+#MIDIConsole .consolePauseButton {
+  display: inline-block;
+  cursor: pointer;
+  border: 0;
+  outline: none;
+  width: 13px;
+  height: 13px;
+  background: url(./img/button_pause.png);
+  background-repeat: no-repeat;
+  position: relative;
+  top: 2px;
+}
 
-    #MIDIConsole .messageList font {
-    display:inline-block;
-    }
-
-    #MIDIConsole .messageList font {
-    }
-
-    #MIDIConsole .consolePauseButton {
-
-        display:inline-block;
-        cursor:pointer;
-        border:0;
-        outline:none;
-        width:13px;
-        height:13px;
-        background: url(./img/button_pause.png);
-        background-repeat:no-repeat;
-        position:relative;
-        top:2px;      
-
-    }
-
-    #MIDIConsole.paused .consolePauseButton {
-
-        background: url(./img/button_play.png);
-
-    }
+#MIDIConsole.paused .consolePauseButton {
+  background: url(./img/button_play.png);
+}
 
 /* track ------------------ */
 
-    .track h3 {
-    font-size:8px;
-    font-weight:100;    
-    position:absolute;
-    top:-16px;
-    }
+.track h3 {
+  font-size: 8px;
+  font-weight: 100;
+  position: absolute;
+  top: -16px;
+}
 
-    .track.muted span .content {  
-    background-color:#888;    
-    }
+.track.muted span .content {
+  background-color: #888;
+}
 
-    .track.muted span .title {
-    color:#888;
-    }
+.track.muted span .title {
+  color: #888;
+}
 
-    .track .muteButton {
-    width:17px;
-    margin-right:15px;
-    }
+.track .muteButton {
+  width: 17px;
+  margin-right: 15px;
+}
 
-    .track .muteButton .content {
-    color:#00EE00;
-    background-color:#00EE00;
-    }
+.track .muteButton .content {
+  color: #00ee00;
+  background-color: #00ee00;
+}
 
-    .deleteTrackButton {
-        
-        float:right;
-        cursor:pointer;
-        border:0;
-        outline:none;
-        width:13px;
-        height:13px;        
-        background: url(./img/button_x.png);
-        background-repeat:no-repeat;
-        opacity:0.4;
-        position:relative;
-        top:14px;
-        
-    }
+.deleteTrackButton {
+  float: right;
+  cursor: pointer;
+  border: 0;
+  outline: none;
+  width: 13px;
+  height: 13px;
+  background: url(./img/button_x.png);
+  background-repeat: no-repeat;
+  opacity: 0.4;
+  position: relative;
+  top: 14px;
+}
 
-    .deleteTrackButton:hover {
-    opacity:1;
-    }
+.deleteTrackButton:hover {
+  opacity: 1;
+}
 
-    .addTrackButton {
-    
-        display:inline-block;
-        cursor:pointer;
-        border:0;
-        outline:none;
-        width:13px;
-        height:13px;
-        background: url(./img/button_plus.png);
-        background-repeat:no-repeat;
-        position:relative;
-        top:2px;
+.addTrackButton {
+  display: inline-block;
+  cursor: pointer;
+  border: 0;
+  outline: none;
+  width: 13px;
+  height: 13px;
+  background: url(./img/button_plus.png);
+  background-repeat: no-repeat;
+  position: relative;
+  top: 2px;
+}
 
-    }    
-
-    .track .console {
-    color:white;
-    }
+.track .console {
+  color: white;
+}
 
 /* beats ------------------ */
 
-    .track .beat.active .content {
-    background-color:#00EE00;
-    }
+.track .beat.active .content {
+  background-color: #00ee00;
+}
 
-    .track.muted .beat.active .content {
-    background-color:#008800;
-    }    
+.track.muted .beat.active .content {
+  background-color: #008800;
+}
 
-    .track.muted .beat.selected .content {
-    border-bottom:5px solid #9d006f;
-    }
+.track.muted .beat.selected .content {
+  border-bottom: 5px solid #9d006f;
+}
 
 /* input ------------------- */
 
-    input {
+input {
+  border: 1px solid red;
 
-        border:1px solid red;
-            
-        display:none;
-        outline:none;
-        border:3px solid black;
-        position:absolute;
-        top:0px;
-        left:0px;
-        width:50px;
-        text-align:center;
-        font-family:font;
-        padding-top:4px;
+  display: none;
+  outline: none;
+  border: 3px solid black;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 50px;
+  text-align: center;
+  font-family: font;
+  padding-top: 4px;
+}
 
-    }
+.dropdown {
+  position: relative;
+  font-size: 12px;
+}
 
-    .dropdown {
+.dropdown .option {
+  box-sizing: border-box;
+  position: absolute;
+  left: -3px;
+  background-color: white;
+  width: 46px;
+  height: 16px;
+  border-left: 3px solid black;
+  border-right: 3px solid black;
+  z-index: 100;
+  padding-top: 3px;
+  padding-left: 5px;
+  text-align: left;
+}
 
-        position:relative;
-        font-size:12px;
+.dropdown .option:last-child {
+  border-bottom: 3px solid black;
+  padding-bottom: 13px;
+}
 
-    }
+.dropdown .option:hover {
+  background-color: #ff00b4;
+}
 
-    .dropdown .option {
-            
-        box-sizing:border-box;
-        position:absolute;
-        left:-3px;
-        background-color:white;
-        width:46px;
-        height:16px;
-        border-left:3px solid black;
-        border-right:3px solid black;
-        z-index:100;
-        padding-top:3px;
-        padding-left:5px;
-        text-align:left;
+.track span.toggle .content {
+  background-color: #888;
+}
 
-    }
-
-    .dropdown .option:last-child {
-    
-        border-bottom:3px solid black;
-        padding-bottom:13px;
-
-    }
-
-    .dropdown .option:hover {
-
-        background-color:#ff00b4;
-
-    }
-
-    .track span.toggle .content {  
-    background-color:#888;
-    }
-
-    .track span.toggle.on .content {  
-    background-color:white;
-    }
+.track span.toggle.on .content {
+  background-color: white;
+}

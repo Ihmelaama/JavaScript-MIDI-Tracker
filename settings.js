@@ -1,43 +1,35 @@
 //----------------------------------------------------
 // VARIABLES
 
-    let holder=document.getElementById("settings");
-    let settings;
+let holder = document.getElementById("settings");
+let settings;
 
-    window.minNoteDuration=10;
-    window.MIDIMessageHistorySize=100;
+window.minNoteDuration = 10;
+window.MIDIMessageHistorySize = 100;
 
 //----------------------------------------------------
 // INIT
 
-    document.addEventListener("mainReadyEvent", init, false);
+document.addEventListener("mainReadyEvent", init, false);
 
-    function init() {
-
-        createSettings();
-
-    }
+function init() {
+  createSettings();
+}
 
 //----------------------------------------------------
 // FUNCTIONS
 
-    function createSettings() {
+function createSettings() {
+  let div;
 
-        let div;
+  if (settings != null) {
+    settings.innerHTML = "";
+    div = settings;
+  } else {
+    div = document.createElement("div");
+    holder.appendChild(div);
+    settings = div;
+  }
 
-        if(settings!=null) {
-
-            settings.innerHTML="";
-            div=settings;
-
-        } else {
-
-            div=document.createElement("div");
-            holder.appendChild(div);
-            settings=div;
-
-        }
-
-        div.innerHTML="<h2>SETTINGS</h2>";
-
-    }
+  div.innerHTML = "<h2>SETTINGS</h2>";
+}
